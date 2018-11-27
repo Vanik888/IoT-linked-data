@@ -90,7 +90,19 @@ void loop() {
     while (client.connected()) {
       if (client.available()) {
         char c = client.read();
+        Serial.write("new char: ");
         Serial.write(c);
+        if (c == '\n') {
+           Serial.write(" char is logged. it is a \\n. \n");
+        }
+        if (c == '\r') {
+          Serial.write(" char is logged. it is a \\r. \n");
+        }
+        if (c != '\n' && c != '\r') {
+          Serial.write(" char is logged\n");
+        }
+        
+
         // if you've gotten to the end of the line (received a newline
         // character) and the line is blank, the http request has ended,
         // so you can send a reply

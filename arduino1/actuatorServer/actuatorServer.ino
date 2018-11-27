@@ -8,7 +8,7 @@ int fanPin = 4;
 byte mac[] = {
   0x90, 0xA2, 0xDA, 0x10, 0xBB, 0xB7
 };
-IPAddress ip(192, 168, 0, 104); //172, 22, 177, 231
+IPAddress ip(192, 168, 0, 103); //172, 22, 177, 231
 
 // Initialize the Ethernet server library with the IP address and port
 EthernetServer server(80);
@@ -38,6 +38,7 @@ void setup() {
   Ethernet.begin(mac, ip);
   server.begin();
   Serial.print("starting... ");
+  Serial.println(Ethernet.localIP());
   //starting LED to show that the microcontroller is working
   pinMode(LED_BUILTIN, OUTPUT);
 
@@ -79,16 +80,15 @@ void loop() {
           for (int i = 0; i < BUF_LEN; i++) { 
             buf_content[i] = client.read();;
             Serial.println(buf_content[i]);
-            counter++; // counter indicates length of the field (900 characters are reserved)
             // if client is not available and therefore full content is saved, break
             if (client.available() == 0) { 
               break;
             }            
-
+            counter++; // counter indicates length of the field (900 characters are reserved)
           }
           Serial.println("Finish to read the request body");
-          Serial.print("counter: " );
-          Serial.println(counter);
+          Serial.println("counter: " );
+          Serial.println("+ counter");
           // if loops look for appropriate response
           // OFF response
           if ((strstr(buf_req, token1) != 0) || (strstr(buf_req, token2) != 0)) {
