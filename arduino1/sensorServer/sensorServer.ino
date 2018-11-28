@@ -20,23 +20,27 @@
 #include <SPI.h>
 #include <Ethernet.h>
 
+#define REQ_LEN 64
 // Enter a MAC address and IP address for your controller below.
 // The IP address will be dependent on your local network:
 byte mac[] = {
   0x90, 0xA2, 0xDA, 0x10, 0xBB, 0xB7
 };
-IPAddress ip(192, 168, 0, 104);
+IPAddress ip(192, 168, 0, 103);
 
 // Initialize the Ethernet server library
 // with the IP address and port you want to use
 // (port 80 is default for HTTP):
 EthernetServer server(80);
 
-
 const int sensorPin = 0;
+const char token1[] = "GET /uni-bonn/raum1047/temperature";
 const String prefix = "@prefix qudt: <http://qudt.org/schema/qudt#> . @prefix ssn: <hhtp://purl.oclc.org/NET/ssnx/ssn#> . @prefix unit: <http://data.nasa.gov/qudt/owl/unit#> .";
 const String triple1 = "<> qudt:QuantityValue ";
 const String triple2 = " ; qudt:unit unit:DegreeCelsius; a ssn:ObservationValue . "; 
+
+char buf_req[REQ_LEN] = {0};
+int req_index = 0;
 
 void setup() {
   // You can use Ethernet.init(pin) to configure the CS pin
@@ -73,7 +77,6 @@ void setup() {
   Serial.print("server is at ");
   Serial.println(Ethernet.localIP());
 
-  
   //configures reference voltage for temperature sensor to 1.1 instead of 5V
   analogReference(INTERNAL);
 }
@@ -90,62 +93,45 @@ void loop() {
     while (client.connected()) {
       if (client.available()) {
         char c = client.read();
-        Serial.write("new char: ");
-        Serial.write(c);
-        if (c == '\n') {
-           Serial.write(" char is logged. it is a \\n. \n");
+        if (req_index < (REQ_LEN - 1)) { 
+          buf_req[req_index] = c;
+          req_index++;
         }
-        if (c == '\r') {
-          Serial.write(" char is logged. it is a \\r. \n");
-        }
-        if (c != '\n' && c != '\r') {
-          Serial.write(" char is logged\n");
-        }
-        
 
         // if you've gotten to the end of the line (received a newline
         // character) and the line is blank, the http request has ended,
         // so you can send a reply
         if (c == '\n' && currentLineIsBlank) {
           // send a standard http response header
-          client.println("HTTP/1.1 200 OK");
-          client.println("Content-Type: text/html");
-          client.println("Connection: close");  // the connection will be closed after completion of the response
-//          client.println("Refresh: 5");  // refresh the page automatically every 5 sec
-          client.println();
-          client.println("<!DOCTYPE HTML>");
-          client.println("<html>");
-          
-          int sensorValue = analogRead(sensorPin); // the measured value
-          int temperature = sensorValue / 9.31;  // 10mV equals to 1 degree -> 10mV/ (1.1V /1024)=9.31     
-          String content = prefix + triple1 + temperature + triple2;
-          Serial.println("==============");
-          Serial.println(content);
-          Serial.println("==============");
-          // output the value of each analog input pin
-          for (int analogChannel = 0; analogChannel < 6; analogChannel++) {
-            int sensorReading = analogRead(analogChannel);
-            if ( analogChannel == 0 ) {
-              sensorReading = sensorReading / 9.31;
-              Serial.print("Current temperature: ");
-              Serial.print(sensorReading);
-              Serial.println();
-            }
-            client.print("analog input ");
-            client.print(analogChannel);
-            client.print(" is ");
-            client.print(sensorReading);
-            client.println("<br />");
+          if (strstr(buf_req, token1) != 0) {
+            Serial.println("Url matched. Send the temperature.");
+            
+            int sensor_val = analogRead(sensorPin);
+            int temp = sensor_val / 9.31; //10mV equals to 1 degree -> 10mV/ (1.1V /1024)=9.31
+            String temp_str = String(temp);
+            
+            int content_len = prefix.length() + triple1.length() + temp_str.length() + triple2.length();
+            client.println("HTTP/1.1 200 OK");
+            client.println("Content-Type: text/turtle");
+            client.print("Content-Length: ");
+            client.println(content_len);
+            client.println("Connection: close");
+            client.println();
+            client.print(prefix);
+            client.print(triple1);
+            client.print(temp_str);
+            client.println(triple2);
+            
+          }          
+          else {
+            Serial.println("Unknown url. Send 404.");
+            client.println("HTTP/1.1 404 Not Found"); 
+            client.println("Content-Type: text/turtle");
+            client.println("Content-Length: 0");
+            client.println("Connection: close");            
           }
-          for (int digitalChannel = 0; digitalChannel < 14; digitalChannel++) {
-            int output_value = digitalRead(digitalChannel);
-            client.print("digital output ");
-            client.print(digitalChannel);
-            client.print(" is ");
-            client.print(output_value);
-            client.println("<br/>");
-          }
-          client.println("</html>");
+          req_index = 0;
+          memset(buf_req, 0, REQ_LEN);
           break;
         }
         if (c == '\n') {
