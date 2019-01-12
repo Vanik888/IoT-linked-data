@@ -2,7 +2,7 @@
 #include <Ethernet.h>
 #include <HttpClient.h>
 
-#define REQ_LEN 20
+#define REQ_LEN 64
 
 int fanPin = 4;
 
@@ -10,7 +10,7 @@ byte mac[] = {
   0x90, 0xA2, 0xDA, 0x10, 0xEF, 0x13
 };
 
-IPAddress ip(192,168,0,101);
+IPAddress ip(192,168,0,112);
 
 // Initialize the Ethernet server library with the IP address and port
 EthernetServer server(80);
@@ -22,11 +22,13 @@ char req_index = 0;
 char buf_content[BUF_LEN];
 int counter = 0;
 
-//const char token1[] PROGMEM = "GET /off ";
 
-char token2[] = "PUT /led";
+// List Of Url That device is going to accept
+const char token2[] = "PUT /uni-bonn/raum1047/led";
+const char token3[] = "GET /uni-bonn/raum1047/led";
 
-
+const String prefix = "@prefix foaf: <http://xmlns.com/foaf/0.1/> .@prefix saref: <https://w3id.org/saref#> .<> a saref:LightingDevice ;";
+const String triple1 = "saref:hasState saref:";
 
 void setup() {
   // setup code to run once:
@@ -47,7 +49,7 @@ void setup() {
   //reserve full buffer with EOS (end of string)
   memset(buf_content, 0, BUF_LEN);
   pinMode(fanPin, OUTPUT);
-  
+
 }
 
 void loop() {
@@ -67,20 +69,20 @@ void loop() {
     //Response of LDFU is processed
     while (client.connected()) {
       if (client.available()) {
-       
+
         char c = client.read();
         //saves the first line of header to assign appropriate response later
-        if (req_index < (REQ_LEN - 1)) { 
+        if (req_index < (REQ_LEN - 1)) {
           buf_req[req_index] = c;
           req_index++;
         }
         Serial.write(c);
-        
+
         //if end of line is reached and currentLineIsBlank is true then following
-        if (c == '\n' && currentLineIsBlank) { 
-          
-          for (int i = 0; i < BUF_LEN; i++) 
-          { 
+        if (c == '\n' && currentLineIsBlank) {
+
+          for (int i = 0; i < BUF_LEN; i++)
+          {
             buf_content[i] = client.read();
             if(index < 745)
             {
@@ -88,35 +90,31 @@ void loop() {
               index++;
               buffer[index] = '\0';
             }
-            
+
             // if client is not available and therefore full content is saved, break
-            if (client.available() == 0) { 
+            if (client.available() == 0) {
               break;
             }
             counter++; // counter indicates length of the field (900 characters are reserved)
-              
+
           }
             Serial.print(buffer);
           // if loops look for appropriate response
-          // ON response
-          if ((strstr(buf_req, token2) != 0   && strstr(buffer, "TurnOn") != NULL)) 
+          //  PUT ON response
+          if ((strstr(buf_req, token2) != 0   && strstr(buffer, "On") != NULL))
           {
+
             client.println("HTTP/1.1 200 OK");
             client.println("Content-Type: RDF/XML");
             client.print("Content-Length: ");
             client.println(counter);
             client.println("Connection: close");
             client.println();
-            //sends received content of the request back
-            //for (int i = 0; i < counter; i++) {
-              //client.print(buf_content[i]);
-            //}
+            // Turn ON Led
             digitalWrite(fanPin, HIGH);
-             
-                      
           }
-            // off response
-          else if((strstr(buf_req, token2) != 0  && strstr(buffer, "TurnOff") != NULL)){
+            // PUT off response
+          else if((strstr(buf_req, token2) != 0  && strstr(buffer, "Off") != NULL)){
              client.println("HTTP/1.1 200 OK");
             client.println("Content-Type: RDF/XML");
             client.print("Content-Length: ");
@@ -124,17 +122,29 @@ void loop() {
             Serial.print("sending response...");
             client.println("Connection: close");
             client.println();
-            //sends received content of the request back
-            //for (int i = 0; i < counter; i++) {
-              //client.print(buf_content[i]);
-            //}
+
             //turning fan off
            digitalWrite(fanPin, LOW);
-           
-            
+
+
+          }
+          // GET status of the pin
+          else if(strstr(buf_req, token3) != 0){
+            String ledState = digitalRead(fanPin) == 0 ? "Off .": "On .";
+            String finalLedState =   triple1+ledState;
+            int content_len = finalLedState.length();
+            client.println("HTTP/1.1 200 OK");
+            client.println("Content-Type: text/turtle");
+            client.print("Content-Length: ");
+            client.println("Connection: close");
+            client.println();
+            client.print(prefix);
+            client.print(finalLedState);
           }
           else {
+
             client.println("HTTP/1.1 404 Not Found"); //204 No Content
+            client.println("Content-Type: RDF/XML");
             client.println("Connection: Keep Alive");
 
           }
