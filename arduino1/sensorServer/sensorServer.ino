@@ -26,7 +26,7 @@
 byte mac[] = {
   0x90, 0xA2, 0xDA, 0x10, 0xBB, 0xB7
 };
-IPAddress ip(192, 168, 0, 103);
+IPAddress ip(192, 168, 0, 113);
 
 // Initialize the Ethernet server library
 // with the IP address and port you want to use
@@ -35,9 +35,10 @@ EthernetServer server(80);
 
 const int sensorPin = 0;
 const char token1[] = "GET /uni-bonn/raum1047/temperature";
-const String prefix = "@prefix qudt: <http://qudt.org/schema/qudt#> . @prefix ssn: <hhtp://purl.oclc.org/NET/ssnx/ssn#> . @prefix unit: <http://data.nasa.gov/qudt/owl/unit#> .";
-const String triple1 = "<> qudt:QuantityValue ";
-const String triple2 = " ; qudt:unit unit:DegreeCelsius; a ssn:ObservationValue . "; 
+
+const String prefix = "@prefix ssn: <http://purl.oclc.org/NET/ssnx/ssn#>. \n@prefix cdt: <http://w3id.org/lindt/custom_datatypes#>. \n@prefix xsd:  <http://www.w3.org/2001/XMLSchema#>. \n@prefix sosa: <http://www.w3.org/ns/sosa/> .\n\n";
+const String triple1 = "\t<> a sosa:Observation;\n\tsosa:hasSimpleResult \"";
+const String triple2 = " Cel\"^^cdt:temperature.\n";
 
 char buf_req[REQ_LEN] = {0};
 int req_index = 0;
@@ -103,14 +104,33 @@ void loop() {
         // so you can send a reply
         if (c == '\n' && currentLineIsBlank) {
           // send a standard http response header
-          if (strstr(buf_req, token1) != 0) {
-            Serial.println("Url matched. Send the temperature.");
-            
+          Serial.print("token1= ");
+          Serial.println(token1);
+          Serial.print("url= ");
+          Serial.println(buf_req);
+          
+          if (strstr(buf_req, token1) != 0) {            
+
             int sensor_val = analogRead(sensorPin);
-            int temp = sensor_val / 9.31; //10mV equals to 1 degree -> 10mV/ (1.1V /1024)=9.31
+            int temp = sensor_val / 9.31; //10mV equals to 1 degree -> 10mV/ (1.1V /1024)=9.31       
             String temp_str = String(temp);
             
+            Serial.print("temperature string=");
+            Serial.print(temp_str);
             int content_len = prefix.length() + triple1.length() + temp_str.length() + triple2.length();
+            Serial.print("prefix-length=");
+            Serial.println(prefix.length());
+            
+            Serial.print("content-length=");
+            Serial.println(content_len);
+            Serial.println(prefix);
+
+
+            Serial.print(triple1);
+            Serial.print(temp_str);
+            Serial.println(triple2);
+
+            
             client.println("HTTP/1.1 200 OK");
             client.println("Content-Type: text/turtle");
             client.print("Content-Length: ");
@@ -118,10 +138,15 @@ void loop() {
             client.println("Connection: close");
             client.println();
             client.print(prefix);
+
+
             client.print(triple1);
             client.print(temp_str);
-            client.println(triple2);
-            
+            client.print(triple2);
+
+
+            Serial.print("Url matched. Send the temperature: ");
+            Serial.println(temp_str);
           }          
           else {
             Serial.println("Unknown url. Send 404.");
