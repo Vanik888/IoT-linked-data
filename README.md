@@ -9,6 +9,8 @@ Winter semester 2019
 Based on [Arduino shield](https://store.arduino.cc/arduino-ethernet-shield-2)
 Provides one resource to the network - the temperature value inside of the room.
 The temperature sensor should be connected to analog input pin 0.
+IP: 192.168.0.105 (might differ, depends on the local network)
+MAC: 0x90, 0xA2, 0xDA, 0x10, 0xBB, 0xB7
 
 ### *Query*
 *Get temperature value:*
@@ -39,6 +41,9 @@ Connection: close
 Based on [Arduino Mega-2560 shield](https://store.arduino.cc/arduino-mega-2560-rev3)
 Provides one resource to the network - the external connected device state.
 The external device should be connected to digital output pin 4.
+IP: 192.168.0.106 (might differ, depends on the local network)
+MAC: 0x90, 0xA2, 0xDA, 0x10, 0xEF, 0x13
+
 
 ### *Queries*
 ---
