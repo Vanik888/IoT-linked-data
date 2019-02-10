@@ -1,14 +1,16 @@
 #include <SPI.h>
 #include <Ethernet.h>
+#include <HttpClient.h>
 
-#define REQ_LEN 20
+#define REQ_LEN 60
 
 int fanPin = 4;
 
 byte mac[] = {
-  0x90, 0xA2, 0xDA, 0x10, 0xBB, 0xB7
+  0x90, 0xA2, 0xDA, 0x10, 0xEF, 0x13
 };
-IPAddress ip(192, 168, 0, 103); //172, 22, 177, 231
+
+IPAddress ip(192,168,0,109);
 
 // Initialize the Ethernet server library with the IP address and port
 EthernetServer server(80);

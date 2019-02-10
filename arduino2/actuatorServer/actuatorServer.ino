@@ -2,7 +2,7 @@
 #include <Ethernet.h>
 #include <HttpClient.h>
 
-#define REQ_LEN 20
+#define REQ_LEN 64
 
 int fanPin = 4;
 
@@ -10,7 +10,7 @@ byte mac[] = {
   0x90, 0xA2, 0xDA, 0x10, 0xEF, 0x13
 };
 
-IPAddress ip(192,168,0,101);
+IPAddress ip(192,168,0,106);
 
 // Initialize the Ethernet server library with the IP address and port
 EthernetServer server(80);
@@ -24,14 +24,22 @@ int counter = 0;
 
 //const char token1[] PROGMEM = "GET /off ";
 
-char token2[] = "PUT /led";
+char put_query_url[] = "PUT /uni-bonn/raum1047/led";
+char get_query_url[] = "GET /uni-bonn/raum1047/led";
+
+String bad_request_msg = "Bad Request";
+String not_found_msg = "Resource not found";
+String state_on_msg = "@prefix foaf: <http://xmlns.com/foaf/0.1/> .\n@prefix saref: <https://w3id.org/saref#> .\n\n\t<> a saref:LightingDevice ;\n\tsaref:hasState saref:On .";
+String state_off_msg = "@prefix foaf: <http://xmlns.com/foaf/0.1/> .\n@prefix saref: <https://w3id.org/saref#> .\n\n\t<> a saref:LightingDevice ;\n\tsaref:hasState saref:Off .";
+String state_prefix = "@prefix foaf: <http://xmlns.com/foaf/0.1/> .\n@prefix saref: <https://w3id.org/saref#> .\n\n\t<> a saref:LightingDevice ;\n\tsaref:hasState ";
+
 
 
 
 void setup() {
   // setup code to run once:
   // Open serial communications and wait for port to open:
-  Serial.begin(9060);
+  Serial.begin(9600);
   while (!Serial) {
     ; // wait for serial port to connect
   }
@@ -39,6 +47,7 @@ void setup() {
   Ethernet.begin(mac, ip);
   server.begin();
   Serial.print("starting... ");
+  Serial.println(Ethernet.localIP());
   //starting LED to show that the microcontroller is working
   pinMode(LED_BUILTIN, OUTPUT);
 
@@ -88,7 +97,6 @@ void loop() {
               index++;
               buffer[index] = '\0';
             }
-            
             // if client is not available and therefore full content is saved, break
             if (client.available() == 0) { 
               break;
@@ -99,44 +107,69 @@ void loop() {
             Serial.print(buffer);
           // if loops look for appropriate response
           // ON response
-          if ((strstr(buf_req, token2) != 0   && strstr(buffer, "TurnOn") != NULL)) 
-          {
-            client.println("HTTP/1.1 200 OK");
-            client.println("Content-Type: RDF/XML");
-            client.print("Content-Length: ");
-            client.println(counter);
-            client.println("Connection: close");
-            client.println();
-            //sends received content of the request back
-            //for (int i = 0; i < counter; i++) {
-              //client.print(buf_content[i]);
-            //}
-            digitalWrite(fanPin, HIGH);
-             
-                      
-          }
-            // off response
-          else if((strstr(buf_req, token2) != 0  && strstr(buffer, "TurnOff") != NULL)){
-             client.println("HTTP/1.1 200 OK");
-            client.println("Content-Type: RDF/XML");
-            client.print("Content-Length: ");
-            client.println(counter);
-            Serial.print("sending response...");
-            client.println("Connection: close");
-            client.println();
-            //sends received content of the request back
-            //for (int i = 0; i < counter; i++) {
-              //client.print(buf_content[i]);
-            //}
-            //turning fan off
-           digitalWrite(fanPin, LOW);
-           
-            
-          }
-          else {
-            client.println("HTTP/1.1 404 Not Found"); //204 No Content
-            client.println("Connection: Keep Alive");
+          if ( strstr(buf_req, put_query_url) != 0 ) {
+            if ( strstr(buffer, "saref:On") != NULL ) {
+              Serial.println("Turning On the pin");
+              
+              client.println("HTTP/1.1 200 OK");
+              client.println("Content-Type: text/turtle");
+              client.print("Content-Length: ");
+              client.println(state_on_msg.length());
+              client.println("Connection: close");
+              client.println();
+              client.println(state_on_msg);
+              
+              digitalWrite(fanPin, HIGH); 
+            }
+            else if ( strstr(buffer, "saref:Off") != NULL )  {
+              Serial.println("Turning Off the pin");
+              
+              client.println("HTTP/1.1 200 OK");
+              client.println("Content-Type: text/turtle");
+              client.print("Content-Length: ");
+              client.println(state_off_msg.length());
+              client.println("Connection: close");
+              client.println();
+              client.println(state_off_msg);
 
+             digitalWrite(fanPin, LOW);
+            } else {
+              Serial.println("The request is wrong (http: 400)");
+              
+              client.println("HTTP/1.1 400 Bad Request"); //204 No Content
+              client.println("Content-Type: text/plain");            
+              client.print("Content-Length: ");
+              client.println(bad_request_msg.length());
+              client.println("Connection: close");
+              client.println();
+              client.println(bad_request_msg);
+            }
+          }
+          else if ( strstr(buf_req, get_query_url) != 0 ) {
+            int fan_pin_state = digitalRead(fanPin);
+            String fan_pin_state_msg = (fan_pin_state == 1) ? "saref:On ." : "saref:Off .";
+            int content_len = state_prefix.length() + fan_pin_state_msg.length();
+
+
+            client.println("HTTP/1.1 200 OK");
+            client.println("Content-Type: text/turtle");
+            client.print("Content-Length: ");
+            client.println(content_len);
+            client.println("Connection: close");
+            client.println();
+            client.print(state_prefix);
+            client.println(fan_pin_state_msg);           
+          }      
+          else {
+            Serial.println("The url is wrong (http: 404)");
+            
+            client.println("HTTP/1.1 404 Not Found"); //204 No Content
+            client.println("Content-Type: text/plain");            
+            client.print("Content-Length: ");
+            client.println(not_found_msg.length());
+            client.println("Connection: close");
+            client.println();
+            client.println(not_found_msg);
           }
           req_index = 0;
           memset(buf_req, 0, REQ_LEN);
