@@ -29,8 +29,8 @@ char get_query_url[] = "GET /uni-bonn/raum1047/led";
 
 String bad_request_msg = "Bad Request";
 String not_found_msg = "Resource not found";
-String state_on_msg = "@prefix foaf: <http://xmlns.com/foaf/0.1/> .\n@prefix saref: <https://w3id.org/saref#> .\n\n\t<> a saref:LightingDevice ;\n\tsaref:hasState saref:On .";
-String state_off_msg = "@prefix foaf: <http://xmlns.com/foaf/0.1/> .\n@prefix saref: <https://w3id.org/saref#> .\n\n\t<> a saref:LightingDevice ;\n\tsaref:hasState saref:Off .";
+String state_on_msg = "@prefix foaf: <http://xmlns.com/foaf/0.1/> .\n@prefix saref: <https://w3id.org/saref#> .\n\n\t<> a saref:LightingDevice ;\n\tsaref:hasState saref:On .\n";
+String state_off_msg = "@prefix foaf: <http://xmlns.com/foaf/0.1/> .\n@prefix saref: <https://w3id.org/saref#> .\n\n\t<> a saref:LightingDevice ;\n\tsaref:hasState saref:Off .\n";
 String state_prefix = "@prefix foaf: <http://xmlns.com/foaf/0.1/> .\n@prefix saref: <https://w3id.org/saref#> .\n\n\t<> a saref:LightingDevice ;\n\tsaref:hasState ";
 
 
@@ -147,7 +147,7 @@ void loop() {
           }
           else if ( strstr(buf_req, get_query_url) != 0 ) {
             int fan_pin_state = digitalRead(fanPin);
-            String fan_pin_state_msg = (fan_pin_state == 1) ? "saref:On ." : "saref:Off .";
+            String fan_pin_state_msg = (fan_pin_state == 1) ? "saref:On .\n" : "saref:Off .\n";
             int content_len = state_prefix.length() + fan_pin_state_msg.length();
 
 

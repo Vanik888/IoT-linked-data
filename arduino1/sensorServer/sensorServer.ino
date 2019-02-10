@@ -36,9 +36,9 @@ EthernetServer server(80);
 const int sensorPin = 0;
 const char token1[] = "GET /uni-bonn/raum1047/temperature";
 
-const String prefix = "@prefix ssn: <http://purl.oclc.org/NET/ssnx/ssn#>. \n@prefix cdt: <http://w3id.org/lindt/custom_datatypes#>. \n@prefix xsd:  <http://www.w3.org/2001/XMLSchema#>. \n@prefix sosa: <http://www.w3.org/ns/sosa/>.\n\n";
-const String triple1 = "\t<> a sosa:Observation;\n\tsosa:hasSimpleResult \"";
-const String triple2 = " Cel\"^^cdt:temperature.\n";
+const String prefix = "@prefix ssn: <http://purl.oclc.org/NET/ssnx/ssn#> .\n@prefix cdt: <http://w3id.org/lindt/custom_datatypes#> .\n@prefix xsd:  <http://www.w3.org/2001/XMLSchema#> .\n@prefix sosa: <http://www.w3.org/ns/sosa/> .\n\n";
+const String triple1 = "\t<> a sosa:Observation ;\n\tsosa:hasSimpleResult \"";
+const String triple2 = " Cel\"^^cdt:temperature .\n";
 
 char buf_req[REQ_LEN] = {0};
 int req_index = 0;
