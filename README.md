@@ -8,10 +8,10 @@ Winter semester 2019
 ### Arduino1
 Based on [Arduino shield](https://store.arduino.cc/arduino-ethernet-shield-2)
 Provides one resource to the network - the temperature value inside of the room.
-The temperature sensor should be connected to analog input pin 0.
-IP: 192.168.0.105 (might differ, depends on the local network)
-MAC: 0x90, 0xA2, 0xDA, 0x10, 0xBB, 0xB7
-SOURCE FILE: arduino1/sensorServer/sensorServer.ino
+The temperature sensor should be connected to analog input pin 0. <br/>
+IP: 192.168.0.105 (might differ, depends on the local network) <br/>
+MAC: 0x90, 0xA2, 0xDA, 0x10, 0xBB, 0xB7 <br/>
+SOURCE FILE: arduino1/sensorServer/sensorServer.ino <br/>
 
 ### *Query*
 *Get temperature value:*
@@ -41,10 +41,10 @@ Connection: close
 ### Arduino2
 Based on [Arduino Mega-2560 shield](https://store.arduino.cc/arduino-mega-2560-rev3)
 Provides one resource to the network - the external connected device state.
-The external device should be connected to digital output pin 4.
-IP: 192.168.0.106 (might differ, depends on the local network)
-MAC: 0x90, 0xA2, 0xDA, 0x10, 0xEF, 0x13
-SOURCE FILE: arduino2/actuatorServer/actuatorServer.ino 
+The external device should be connected to digital output pin 4. <br/>
+IP: 192.168.0.106 (might differ, depends on the local network) <br/>
+MAC: 0x90, 0xA2, 0xDA, 0x10, 0xEF, 0x13 <br/>
+SOURCE FILE: arduino2/actuatorServer/actuatorServer.ino <br/>
 
 
 ### *Queries*
