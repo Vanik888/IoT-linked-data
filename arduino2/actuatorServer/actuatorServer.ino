@@ -10,7 +10,7 @@ byte mac[] = {
   0x90, 0xA2, 0xDA, 0x10, 0xEF, 0x13
 };
 
-IPAddress ip(192,168,0,112);
+IPAddress ip(192,168,0,109);
 
 // Initialize the Ethernet server library with the IP address and port
 EthernetServer server(80);
@@ -98,31 +98,30 @@ void loop() {
             counter++; // counter indicates length of the field (900 characters are reserved)
 
           }
-            Serial.print(buffer);
+            //Serial.print(buffer);
           // if loops look for appropriate response
           //  PUT ON response
-          if ((strstr(buf_req, token2) != 0   && strstr(buffer, "On") != NULL))
+           String stringOne = buf_content;
+          if ((strstr(buf_req, token2) != 0   &&  stringOne.indexOf("on") != -1))
           {
-
             client.println("HTTP/1.1 200 OK");
-            client.println("Content-Type: RDF/XML");
+            client.println("Content-Type: text/turtle");
             client.print("Content-Length: ");
             client.println(counter);
             client.println("Connection: close");
-            client.println();
+              client.println();
             // Turn ON Led
             digitalWrite(fanPin, HIGH);
           }
             // PUT off response
-          else if((strstr(buf_req, token2) != 0  && strstr(buffer, "Off") != NULL)){
-             client.println("HTTP/1.1 200 OK");
-            client.println("Content-Type: RDF/XML");
+          else if((strstr(buf_req, token2) != 0  && stringOne.indexOf("off") != -1)){
+
+            client.println("HTTP/1.1 200 OK");
+            client.println("Content-Type: text/turtle");
             client.print("Content-Length: ");
             client.println(counter);
-            Serial.print("sending response...");
             client.println("Connection: close");
-            client.println();
-
+             client.println();
             //turning fan off
            digitalWrite(fanPin, LOW);
 
@@ -132,12 +131,14 @@ void loop() {
           else if(strstr(buf_req, token3) != 0){
             String ledState = digitalRead(fanPin) == 0 ? "Off .": "On .";
             String finalLedState =   triple1+ledState;
-            int content_len = finalLedState.length();
+            int content_len = finalLedState.length() + prefix.length() ;
             client.println("HTTP/1.1 200 OK");
             client.println("Content-Type: text/turtle");
             client.print("Content-Length: ");
+             client.print(content_len);
             client.println("Connection: close");
             client.println();
+
             client.print(prefix);
             client.print(finalLedState);
           }
